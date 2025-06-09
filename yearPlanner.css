@@ -1,0 +1,98 @@
+:root {
+    --textcolor: #d8d6d6;
+    --linkcolor: #acacac;
+    --linkhover: #606870;
+    --bgcolor: #4a525a;
+}
+
+body {
+    background-color: var(--bgcolor);
+    font-family: Verdana, sans-serif;
+    color: var(--textcolor);
+    margin: 0;
+}
+
+#calendarBody {
+    display: none;
+}
+
+a,
+a:visited {
+    color: var(--linkcolor);
+}
+
+a:hover {
+    background-color: var(--linkhover);
+}
+
+#heading {
+    display: block;
+    font-family: 'Trebuchet MS', sans-serif;
+    letter-spacing: -0.1em;
+    color: var(--textcolor);
+    margin: 50px auto 30px 10%;
+}
+
+main {
+    margin: 3%;
+}
+
+table {
+    table-layout: fixed;
+}
+
+th {
+    text-align: left;
+    border: 1px solid;
+    height: 50px;
+}
+
+td {
+    position: relative;
+    border: 1px solid;
+    width: 50px;
+    height: 50px;
+    font-size: 12px;
+    vertical-align: middle;
+    text-align: center;
+}
+
+.dayMarker {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+form {
+    margin: 15px;
+}
+
+#categoryContainer {
+    margin: 20px;
+    display: none;
+}
+
+#dropdown {
+    margin: 10px;
+}
+
+/* .userData {
+    display: none;
+} */
+
+#userColor {
+    height: 25px;
+    width: 25px;
+}
+
+.dayCell:hover {
+    background-color: var(--linkhover);
+}
+
+.dayCell {
+    background-color: var(--bgcolor);
+}
+
+.cellClicked {
+    background-color: green;
+}

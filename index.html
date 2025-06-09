@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="yearPlanner.css" />
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script src="yearPlanner.js"></script>
+    <title>Year Planner</title>
+</head>
+
+<body>
+    <h2 id="heading">Year Planner</h2>
+    <div id="dateInput">
+        <form>
+            <label for="date">Please select:</label>
+            <input type="date" id="date" name="date" />
+            <button id="submit" type="button">Submit</button>
+        </form>
+    </div>
+    <main>
+        <div id="calendarContainer">
+        <table id="calendarBody">
+         <!--Calendar grid goes here-->
+        </table>
+        </div>
+        <div id="categoryContainer">
+            <label for="category">Add category:</label>
+            <input type="text" id="category" name="category" />
+            <input type="color" id="userColor" name="userColor" />
+            <button id="addCategory" type="button">+</button><div id="error"></div><br>
+            <select id="dropdown"><option selected="selected" value="default">Choose a category</option></select><span id="colorCont"></span><br><br>
+            <button id="clearAll" name="clearAll">Clear all</button>
+        </div>
+       
+    </main>
+</body>
+
+</html>
