@@ -5,11 +5,10 @@
 
 
 // --- TO DO ---
-//create page initialisation method that loads localStorage
+//Change how data is stored in cells. DON'T save entire HTML string to storage
 //Implement colour indicator dot
 //Allow multiple different entries per day
 //Show/hide categories depending on dropdown selection
-//Add alert box for clear button
 //Tidy code
 
 
@@ -22,12 +21,16 @@ $(document).ready(function () {
         },
 
         reset() {
-            localStorage.clear();
-            $('#category').val('');
-            $('#dropdown option:not(:first)').remove();
-            $('td').attr('class', 'dayCell').css('background-color', 'var(--bgcolor)');
-            $('.userData').remove();
-            $('#colorIndicator').hide();
+            if (confirm("Are you sure?")) {
+                localStorage.clear();
+                $('#category').val('');
+                $('#dropdown option:not(:first)').remove();
+                $('td').attr('class', 'dayCell').css('background-color', 'var(--bgcolor)');
+                $('.userData').remove();
+                $('#colorIndicator').hide();
+            } else {
+                return;
+            }
         }
     }
 
@@ -224,6 +227,7 @@ $(document).ready(function () {
             $('#submit').click(calendar.grabDate);
             $('#submit').click(calendar.generateMonths);
             $('#submit').click(calendar.display);
+            $('#submit').click(storageControl.loadCells);
             $('#submit').click(cells.setContent);
         },
 
@@ -233,7 +237,7 @@ $(document).ready(function () {
 
         dropdownListener() {
             $('#dropdown').on('change', function () {
-                storageControl.loadCells();
+                //USE THIS LATER FOR VISIBILITY SELECTION METHOD
             })
         },
 
