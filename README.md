@@ -8,7 +8,6 @@
 
 ### What it doesn't do (yet):
     - Colour coding of categories not implemented.
-    - Warning message on 'Clear All' to be added.
 
 ### Known bugs:
     - Poor formatting of cells with content.
