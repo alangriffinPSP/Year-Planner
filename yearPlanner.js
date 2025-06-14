@@ -5,6 +5,8 @@
 
 
 // --- TO DO ---
+
+//Implement method that returns dropdown selection
 //Change how data is stored in cells. DON'T save entire HTML string to storage
 //Implement colour indicator dot
 //Allow multiple different entries per day
@@ -219,6 +221,16 @@ $(document).ready(function () {
         duplicateEntry(entry) {
             let duplicate = $(`#dropdown option[value="${entry}"]`).length > 0;
             return duplicate;
+        },
+
+        //returns selected dropdown category 
+        currentSelection() {
+            let currentSelection = $('#dropdown').find('option:selected').attr('id');
+            
+            if (currentSelection) {
+                console.log(currentSelection);
+                return currentSelection;
+            }
         }
     }
 
@@ -237,7 +249,7 @@ $(document).ready(function () {
 
         dropdownListener() {
             $('#dropdown').on('change', function () {
-                //USE THIS LATER FOR VISIBILITY SELECTION METHOD
+                categories.currentSelection();
             })
         },
 
@@ -248,6 +260,7 @@ $(document).ready(function () {
 
     initialise.pageElements();
     storageControl.loadCategories();
+    categories.currentSelection();
     listeners.submitDateListener();
     listeners.categoriesListener();
     listeners.clearAllListener();
