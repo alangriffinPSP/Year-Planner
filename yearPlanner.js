@@ -6,7 +6,6 @@
 
 // --- TO DO ---
 
-//Implement method that returns dropdown selection
 //Change how data is stored in cells. DON'T save entire HTML string to storage
 //Implement colour indicator dot
 //Allow multiple different entries per day
@@ -60,9 +59,9 @@ $(document).ready(function () {
             return savedCategories;
         },
 
-        saveCells(cell, data) {
+        saveCells(cell, data, test) {
             let cells = JSON.parse(localStorage.getItem('Cells')) || [];
-            cells.push({ Cell: cell, Data: data });
+            cells.push({ Cell: cell, Data: data, TEST: test});
 
             localStorage.setItem('Cells', JSON.stringify(cells));
         },
@@ -172,31 +171,41 @@ $(document).ready(function () {
         //unfinished. Sets cell content of users selection.
         setContent() {
             $('.dayCell').off('click').on('click', (function () {
-                let $dropdown = $('#dropdown'); //dropdown menu object
-                let $selectedCat = $dropdown.find('option:selected'); //selected dropdown category
+                let selectedCategory = categories.currentSelection(); //selected dropdown category
                 let $identifier = $(this).attr('id'); //cell id to pass to storage method
                 let storedContent;
 
                 //if dropdown is default do nothing.
-                if ($selectedCat.is(":first-child")) {
+                if (!selectedCategory) {
                     return;
                 }
                 //dupe check here
                 let $dupeCheck = $(this).find('.userData').filter(function () {
-                    return $(this).text() === $selectedCat.text();
+                    return $(this).text() === selectedCategory;
                 });
 
                 if ($dupeCheck.length === 0) {
-                    $(this).append(`<span class="userData">${$selectedCat[0].innerText}</span>`);
-                    storedContent = $(this).html();
+                    $(this).append(`<span class="userData">${selectedCategory}</span>`);
+                    storedContent = $(this).html(); //CHANGE THIS TO BE MORE EFFICIENT
 
-                    storageControl.saveCells($identifier, storedContent);
+                    storageControl.saveCells($identifier, storedContent, selectedCategory);
                 } else {
                     $dupeCheck.remove();
                     storageControl.removeCells($identifier); //delete from localStorage
                 }
             }))
         },
+
+        scale() {
+            $('.dayCell').hover(function () {
+                if($(this).find('span.userData').length > 0){
+                $(this).addClass('scaled');
+                }
+            },
+                function () {
+                    $(this).removeClass('scaled');
+                })
+        }
     }
 
     const categories = {
@@ -226,7 +235,7 @@ $(document).ready(function () {
         //returns selected dropdown category 
         currentSelection() {
             let currentSelection = $('#dropdown').find('option:selected').attr('id');
-            
+
             if (currentSelection) {
                 console.log(currentSelection);
                 return currentSelection;
@@ -241,6 +250,7 @@ $(document).ready(function () {
             $('#submit').click(calendar.display);
             $('#submit').click(storageControl.loadCells);
             $('#submit').click(cells.setContent);
+            $('#submit').click(cells.scale);
         },
 
         categoriesListener() {
