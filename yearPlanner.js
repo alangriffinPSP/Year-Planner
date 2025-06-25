@@ -83,13 +83,13 @@ $(document).ready(function () {
 
             if (savedCells) {
                 savedCells.forEach(function (cellObject) {
-                    let cell = $("#" + cellObject.Cell)
+                    let $cell = $("#" + cellObject.Cell)
 
                     cellObject.Values.forEach(function (value) {
 
-                        $(cell).append(`<span class="userData">${value.Data}<br></span>`);
-                        let colorTitle = $(cell).find('.userData').last();
-                        $(colorTitle).css('background-color', value.Color);
+                        $cell.append(`<span class="userData">${value.Data}<br></span>`);
+                        let $colorTitle = $cell.find('.userData').last();
+                        $colorTitle.css('background-color', value.Color);
                     })
                 })
             }
@@ -162,10 +162,10 @@ $(document).ready(function () {
             //row created for each month with corresponding ids/classes
             let id = 1;
             months.forEach(function (month) {
-                const header = $('<th></th>').attr('id', id).attr('class', 'monthRow').text(month);
-                const row = $('<tr></tr>');
-                row.append(header);
-                $('#calendarBody').append(row);
+                const $header = $('<th></th>').attr('id', id).attr('class', 'monthRow').text(month);
+                const $row = $('<tr></tr>');
+                $row.append($header);
+                $('#calendarBody').append($row);
                 id++;
             })
 
@@ -206,7 +206,7 @@ $(document).ready(function () {
             $('.dayCell').off('click').on('click', (function () {
                 let selectedCategory = categories.currentSelection(); //Grabs object of selected title/colour 
 
-                let $identifier = $(this).attr('id'); //cell id to pass to storage method
+                let identifier = $(this).attr('id'); //cell id to pass to storage method
 
                 //if dropdown is default do nothing.
                 if (!selectedCategory) { return; }
@@ -217,13 +217,13 @@ $(document).ready(function () {
 
                 if ($dupeCheck.length === 0) {
                     $(this).prepend(`<span class="userData">${selectedCategory.title}<br></span>`);
-                    let bg = $(this).find('.userData').first();
-                    $(bg).css('background', selectedCategory.color);
+                    let $bg = $(this).find('.userData').first();
+                    $bg.css('background', selectedCategory.color);
 
-                    storageControl.saveCells($identifier, selectedCategory.title, selectedCategory.color);
+                    storageControl.saveCells(identifier, selectedCategory.title, selectedCategory.color);
                 } else {
                     $dupeCheck.remove();
-                    storageControl.removeCells($identifier, selectedCategory.title); //delete from localStorage
+                    storageControl.removeCells(identifier, selectedCategory.title); //delete from localStorage
                 }
             }))
         },
@@ -256,14 +256,14 @@ $(document).ready(function () {
     const categories = {
 
         createCategory() {
-            let $newCategory = $('#category').val().trim();
-            let $categoryColor = $('#userColor').val();
+            let newCategory = $('#category').val().trim();
+            let categoryColor = $('#userColor').val();
 
             //checks for duplicate entry before adding to dropdown and committing to storage
-            if ($newCategory && !categories.duplicateCatEntry($newCategory, $categoryColor)) {
-                $('#dropdown').append(`<option id="${$newCategory}" value="${$newCategory}">${$newCategory}</option>`);
+            if (newCategory && !categories.duplicateCatEntry(newCategory, categoryColor)) {
+                $('#dropdown').append(`<option id="${newCategory}" value="${newCategory}">${newCategory}</option>`);
                 //parses category to method for localStorage
-                storageControl.saveCategories($newCategory, $categoryColor);
+                storageControl.saveCategories(newCategory, categoryColor);
                 $('#error').text('');
             } else {
                 $('#error').text('Duplicate entry, please try another');
@@ -302,8 +302,7 @@ $(document).ready(function () {
         colorIndicator() {
             let selection = categories.currentSelection();
             if (selection) {
-                $('#colorIndicator').show();
-                $('#colorIndicator').css('color', selection.color);
+                $('#colorIndicator').show().css('color', selection.color);
             } else {
                 $('#colorIndicator').hide();
             }
