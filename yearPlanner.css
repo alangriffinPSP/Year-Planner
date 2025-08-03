@@ -1,110 +1,120 @@
 :root {
-    --textcolor: #d8d6d6;
-    --linkcolor: #acacac;
-    --linkhover: #606870;
-    --bgcolor: #4a525a;
+  --textcolor: #d8d6d6;
+  --linkcolor: #acacac;
+  --linkhover: #606870;
+  --bgcolor: #4a525a;
 }
 
 body {
-    background-color: var(--bgcolor);
-    font-family: Verdana, sans-serif;
-    color: var(--textcolor);
-    margin: 0;
+  background-color: var(--bgcolor);
+  font-family: Verdana, sans-serif;
+  color: var(--textcolor);
+  margin: 0;
 }
 
 #calendarBody {
-    display: none;
+  display: none;
 }
 
 a,
 a:visited {
-    color: var(--linkcolor);
+  color: var(--linkcolor);
 }
 
 a:hover {
-    background-color: var(--linkhover);
+  background-color: var(--linkhover);
 }
 
 #heading {
-    display: block;
-    font-family: 'Trebuchet MS', sans-serif;
-    letter-spacing: -0.1em;
-    color: var(--textcolor);
-    margin: 50px auto 30px 10%;
+  display: block;
+  font-family: "Trebuchet MS", sans-serif;
+  letter-spacing: -0.1em;
+  color: var(--textcolor);
+  margin: 50px auto 30px 10%;
 }
 
 main {
-    margin: 3%;
+  margin: 3%;
 }
 
 table {
-    table-layout: fixed;
+  table-layout: fixed;
 }
 
 th {
-    text-align: left;
-    border: 1px solid;
-    height: 50px;
+  text-align: left;
+  border: 1px solid;
+  height: 20px;
+}
+
+.monthRow:first {
+  display: none;
 }
 
 td {
-    position: relative;
-    border: 1px solid;
-    width: 50px;
-    height: 50px;
-    font-size: 12px;
-    vertical-align: middle;
-    text-align: center;
+  position: relative;
+  border: 1px solid;
+  width: 20vw; /*CHANGE*/
+  /* height: 20vw; REMOVE? */
+  font-size: 12px;
+  vertical-align: middle;
+  text-align: center;
 }
 
 td.scaled {
-    transform: scale(2.3);
-    width: fit-content;
-    z-index: 1;
-    position: relative;
+  transform: scale(2.3);
+  width: fit-content;
+  height: 20px;
+  z-index: 1;
+  position: relative;
 }
 
 .dayMarker {
-    position: absolute;
-    top: 0;
-    left: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
 form {
-    margin: 15px;
+  margin: 15px;
 }
 
 #categoryContainer {
-    margin: 20px;
-    display: none;
+  margin: 20px;
+  display: none;
 }
 
 #dropdown {
-    margin: 10px;
+  margin: 10px;
 }
 
 #colorIndicator {
-    display: none;
-    font-size: 40px;
-    vertical-align: center;
+  display: none;
+  font-size: 40px;
+  vertical-align: center;
 }
 
 #userColor {
-    height: 25px;
-    width: 25px;
+  height: 25px;
+  width: 25px;
 }
 
-.userData {
-    padding: 2px;
-    border-radius: 2px;
+.fullTitle {
+  padding: 2px;
+  border-radius: 2px;
+  display: none;
+}
+
+.dot {
+  display: block;
 }
 
 .dayCell:hover {
-    background-color: var(--linkhover);
+  background-color: var(--linkhover);
 }
 
 .dayCell {
-    background-color: var(--bgcolor);
-    transition: transform 0.15s ease;
-    min-width: 50px;
+  background-color: var(--bgcolor);
+  transition: transform 0.15s ease;
+  min-width: 20px;
 }

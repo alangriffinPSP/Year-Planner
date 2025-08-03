@@ -1,16 +1,5 @@
-### What it does:
-    - Generates calendar based on user input (Defaults to today's date). This accurately accounts for leap years.
-    - Allows user created categories with colour coding, whilst checking for duplication.
-        - Categories saved to localStorage and loaded in when planner is generated.
-    - Categories can be assigned/removed from cells.
-        - Cells saved to localStorage and loaded in when planner is generated.
-        - Cells then can be filtered with dropdown box.
-        - Cells can be removed by selecting corresponding category and selecting populated cell.
-    - Clear all function resets categories and cells, clears localStorage.
-
-### Known issues:
-    - Poor formatting of cells with long string content.
-    - Readability conflict for certain colour choices.
-
-### Possible improvements:
-    - Inefficient data structure and usage of storage.
+Year planner generates dynamically based on user's chosen date and accurately aligns with days of the week.
+User can input categories and attribute colour value to each.
+User can select category from dropdown and enter record in individual day cells.
+Cell data scales and shows full detail on mouseover. Dropdown selects which category to display.
+Data is stored in local storage to maintain records after page refresh.
