@@ -1,3 +1,12 @@
+//BUGS & ISSUES
+//✅ Newly created categories are not clickable in list until page refresh
+//✅ Current method of toggling means newly created entries can 'flip-flop'. Change class name instead.
+//✅ Newly created category cells aren't able to toggle until after refresh
+//✅ Submit button duplicates category list each time it is pressed
+//✅ Data not clearing effectively on 'Clear All'
+//Single dots hidden behind dayMarker
+//Multiple dots deform cell size
+
 const dataManager = (function () {
   let instance;
 
@@ -12,6 +21,15 @@ const dataManager = (function () {
 
     getData() {
       return JSON.parse(JSON.stringify(this.data));
+    }
+
+    clearData() {
+      this.data = {
+        categories: {},
+        cells: {},
+      };
+      localStorage.removeItem("storedData");
+      this.saveToStorage();
     }
 
     addCategory(title, color) {
@@ -41,7 +59,7 @@ const dataManager = (function () {
       } else {
         return;
       }
-      console.log(this.data);
+      // console.log(this.data);
       this.saveToStorage();
     }
 
@@ -61,7 +79,7 @@ const dataManager = (function () {
         console.log(`All entries for ${cellDate} removed.`);
       }
 
-      console.log(this.data);
+      // console.log(this.data);
       this.saveToStorage();
     }
 
@@ -101,12 +119,12 @@ $(document).ready(function () {
 
     reset() {
       if (confirm("Are you sure?")) {
-        localStorage.clear();
         $("#category").val("");
-        $("#dropdown option:not(:first)").remove();
+        $("#categoryList").empty();
+        $(".taskCategory").remove();
         $(".fullTitle").remove();
         $(".dot").remove();
-        $("#colorIndicator").hide();
+        dataHandler.clearData();
       } else {
         return;
       }
@@ -114,7 +132,6 @@ $(document).ready(function () {
   };
 
   const calendar = {
-    //grabs date from user input
     grabDate() {
       let selectedDate = $("#date").val();
       if (!selectedDate) {
@@ -122,13 +139,13 @@ $(document).ready(function () {
         selectedDate = currentDate;
       }
       let date = new Date(selectedDate);
+      let day = date.getDay();
       let month = date.getMonth() + 1;
       let year = date.getFullYear();
 
-      return [month, year];
+      return [day, month, year];
     },
 
-    //creates new date object and returns number of days in parsed month
     daysInMonth(month, year) {
       return new Date(year, month, 0).getDate();
     },
@@ -149,49 +166,42 @@ $(document).ready(function () {
         "December",
       ];
 
-      //Ensures only one calendar can be generated at a time
       $("#calendarBody").empty();
 
       calendar.dayHeaders();
 
-      //row created for each month with corresponding ids/classes
-      let id = 1; //changed from 1 to account for days row
-      months.forEach(function (month) {
+      let [, userMonth] = calendar.grabDate();
+      for (let i = 0; i < months.length; i++) {
+        const index = (userMonth - 1 + i) % months.length; //wrap around
         const $header = $("<th></th>")
-          .attr("id", id)
+          .attr("id", index + 1)
           .attr("class", "monthRow")
-          .text(month);
+          .text(months[index]);
         const $row = $("<tr></tr>");
         $row.append($header);
         $("#calendarBody").append($row);
-        id++;
-      });
-
+      }
       calendar.generateDays();
     },
 
-    //generates a cell for each day in the month based on year selected by user
     generateDays() {
-      //grabs year from user input
-      const [, userYear] = calendar.grabDate();
+      let [userDay, userMonth, userYear] = calendar.grabDate();
 
-      //loops through all rows with selected class
       $(".monthRow").each(function () {
-        //creates month indentifier from current row's id
         if ($(this).attr("id") > 0) {
           const $rowHeader = $(this);
           const rowID = parseInt($rowHeader.attr("id"));
-          //finds closest previous row
+
           const $row = $rowHeader.closest("tr");
-          //calculates days in month using row's id
+
           const days = calendar.daysInMonth(rowID, userYear);
-          //adds cell for each day in given month and sets unique id
+
           for (let i = 1; i <= days; i++) {
             $row.append(
-              `<td id="${userYear}-${rowID}-${i}" class="dayCell"><span class="dayMarker">${i}</span></td>`
+              `<td id="${userYear}-${rowID}-${i}" class="dayCell"><span class="dayMarker">${i}</span><span class="catCount"></span></td>`
             );
           }
-          calendar.fitDays($row); //Runs once for each month
+          calendar.fitDays($row);
         }
       });
     },
@@ -226,6 +236,7 @@ $(document).ready(function () {
     display() {
       $("#calendarBody").show();
       $("#categoryContainer").show();
+      $("#categoryList").show();
     },
   };
 
@@ -238,11 +249,18 @@ $(document).ready(function () {
 
           let identifier = $(this).attr("id");
 
-          //if dropdown is default do nothing.
           if (!selectedCategory) {
             return;
           }
-          //check for content duplication
+
+          let visibility = $(`img[id^='${selectedCategory.title}']`).attr(
+            "class"
+          );
+
+          if (visibility === "hidden") {
+            cells.makeAllVisible(selectedCategory.title);
+          }
+
           let $dupeTitle = $(this)
             .find(".fullTitle")
             .filter(function () {
@@ -260,19 +278,23 @@ $(document).ready(function () {
 
           if ($dupeTitle.length === 0) {
             $(this).prepend(
-              `<span class="fullTitle">${selectedCategory.title}<br></span>`,
+              `<span class="fullTitle">${selectedCategory.title}</span>`,
               `<span class="dot" style="color: ${selectedCategory.color}">&#8226;</span>`
             );
             let $bg = $(this).find(".fullTitle").first();
             $bg.css("background", selectedCategory.color);
 
-            dataHandler.addCell(identifier, selectedCategory.title); //CHANGED HERE
+            dataHandler.addCell(identifier, selectedCategory.title);
+            categories.updateCategoryCounts(); //NEW
           } else {
             $dupeTitle.remove();
             $dupeDot.remove();
 
-            dataHandler.removeCell(identifier, selectedCategory.title); //CHANGED HERE
+            dataHandler.removeCell(identifier, selectedCategory.title);
+            categories.updateCategoryCounts(); //NEW
           }
+
+          // cells.contentCounter($(this));
         });
     },
 
@@ -299,12 +321,12 @@ $(document).ready(function () {
     loadCells() {
       const data = dataHandler.getData();
       const categories = data.categories;
-      const cells = data.cells;
+      const cellData = data.cells;
 
-      for (let cellId in cells) {
-        if (cells.hasOwnProperty(cellId)) {
+      for (let cellId in cellData) {
+        if (cellData.hasOwnProperty(cellId)) {
           let $cell = $("#" + cellId);
-          let entries = cells[cellId];
+          let entries = cellData[cellId];
 
           for (let i = 0; i < entries.length; i++) {
             let category = entries[i].category;
@@ -312,84 +334,95 @@ $(document).ready(function () {
               ? categories[category].color
               : "#000";
 
-            $cell.append(`<span class="fullTitle">${category}<br></span>`);
+            $cell.append(`<span class="fullTitle">${category}</span>`);
             let $title = $cell.find(".fullTitle").last();
             $title.css("background-color", color);
             $cell.append(`<span class="dot">&#8226;</span>`);
             let $dot = $cell.find(".dot").last();
             $dot.css("color", color);
+
+            // cells.contentCounter($cell);
           }
         }
       }
     },
 
-    displaySelected() {
+    makeAllVisible(category) {
       $(".fullTitle").each(function () {
-        let selected = categories.currentSelection();
-        let $dot = $(this).siblings(".dot");
-        if (!selected) {
-          return;
-        }
-        if ($(this).text() == selected.title) {
-          $dot.show();
-        } else {
-          $dot.hide();
+        let $cellContents = $(this).html();
+        let $icon = $(`#${category}Select`).nextAll("img").first();
+        if (category === $cellContents) {
+          let $dot = $(this).next();
+          $dot.attr("class", "dot");
+          $icon.attr({ src: "Icons/openEye.png", class: "visible" });
         }
       });
     },
 
+    //Still working here
+    contentCounter(cell) {
+      let contentCount = cell.find(".fullTitle").length;
+      if (contentCount > 1) {
+        cell.find(".dot").hide();
+        cell.find(".catCount").text(contentCount);
+        cells.scale();
+      } else {
+        cell.find(".dot").show();
+        cell.find(".catCount").remove();
+      }
+    },
+
     scale() {
-      $(".dayCell")
-        .on("mouseenter", function () {
-          const selected = categories.currentSelection();
-          if (!selected) {
-            return;
-          }
-          const $this = $(this);
-
-          // Check if this cell contains the selected category
-          const $title = $this.find(".fullTitle").filter(function () {
-            return $(this).text() === selected.title;
-          });
-
-          const $dot = $this.find(".dot").filter(function () {
-            return $(this).css("color") === cells.hexConvert(selected.color);
-          });
-
-          if ($title.length > 0 && $dot.length > 0) {
-            $this.addClass("scaled");
-            $title.show();
-            $dot.hide();
-          }
-        })
-        .on("mouseleave", function () {
-          const $this = $(this);
-          if ($this.hasClass("scaled")) {
-            const $title = $this.find(".fullTitle");
-            const $dot = $this.find(".dot");
-            $this.removeClass("scaled");
-            $title.hide();
-            $dot.show();
-          }
-        });
+      //   $(".dayCell")
+      //     .on("mouseenter", function () {
+      //       const selected = categories.currentSelection();
+      //       if (!selected) {
+      //         return;
+      //       }
+      //       const $this = $(this);
+      //       const $title = $this.find(".fullTitle").filter(function () {
+      //         return $(this).text() === selected.title;
+      //       });
+      //       const $dot = $this.find(".dot").filter(function () {
+      //         return $(this).css("color") === cells.hexConvert(selected.color);
+      //       });
+      //       if ($title.length > 0 && $dot.length > 0) {
+      //         $this.addClass("scaled");
+      //         $title.show();
+      //         $dot.hide();
+      //       }
+      //     })
+      //     .on("mouseleave", function () {
+      //       const $this = $(this);
+      //       if ($this.hasClass("scaled")) {
+      //         const $title = $this.find(".fullTitle");
+      //         const $dot = $this.find(".dot");
+      //         $this.removeClass("scaled");
+      //         $title.hide();
+      //         $dot.show();
+      //       }
+      //     });
     },
   };
 
   const categories = {
     createCategory() {
       let newCategory = $("#category").val().trim();
+      let safeCatTitle = newCategory.replace(/\s+/g, ""); //NEW
       let categoryColor = $("#userColor").val();
+      let listAppend = `<ul class="taskCategory"><input type="radio" name="categorySelector" id="${safeCatTitle}Select" value="${newCategory}"><img id="${safeCatTitle}Eyes" class="visible" src="Icons/openEye.png"><span class="catTitle">${newCategory}</span><span class="catColor" style=
+          "color:${categoryColor}"> &#8226;</span><span class="${safeCatTitle}Count"> ${0} instance(s) </span>`;
 
-      //checks for duplicate entry before adding to dropdown and committing to storage
       if (
         newCategory &&
         !categories.duplicateCatEntry(newCategory, categoryColor)
       ) {
-        $("#dropdown").append(
-          `<option id="${newCategory}" value="${newCategory}">${newCategory}</option>`
-        );
+        $("#categoryList").append(listAppend);
 
-        dataHandler.addCategory(newCategory, categoryColor); //CHANGED HERE
+        dataHandler.addCategory(newCategory, categoryColor);
+        categories.updateCategoryCounts();
+        categories.updateCategoryUI();
+
         $("#error").text("");
       } else {
         $("#error").text("Duplicate entry, please try another");
@@ -399,7 +432,7 @@ $(document).ready(function () {
     },
 
     duplicateCatEntry(title, color) {
-      const savedCategories = dataHandler.getCategories(); //CHANGED HERE
+      const savedCategories = dataHandler.getCategories();
 
       for (let key in savedCategories) {
         if (key === title || savedCategories[key].color === color) {
@@ -410,20 +443,75 @@ $(document).ready(function () {
       return false;
     },
 
-    updateDropdownUI() {
-      // Call explicitly when dropdown data will have changed
-      const categories = dataHandler.getCategories();
-      $("#dropdown option:not(:first)").remove();
-      Object.keys(categories).forEach(function (title) {
-        $("#dropdown").append(
-          `<option id="${title}" value="${title}">${title}</option>`
+    //NEW
+    categoryCount(title) {
+      let count = 0;
+      $(".fullTitle").each(function () {
+        const text = $(this).text().trim();
+        if (text === title) {
+          count++;
+        }
+      });
+      return count;
+    },
+
+    updateCategoryCounts() {
+      const savedCategories = dataHandler.getCategories();
+      Object.keys(savedCategories).forEach(function (title) {
+        const count = categories.categoryCount(title);
+        let safeCatTitle = title.replace(/\s+/g, "");
+        $(`.${safeCatTitle}Count`).text(` ${count} instance(s)`);
+      });
+    },
+
+    updateCategoryUI() {
+      $("#categoryList").empty();
+      const savedCategories = dataHandler.getCategories();
+
+      Object.keys(savedCategories).forEach(function (title) {
+        let safeCatTitle = title.replace(/\s+/g, "");
+        $("#categoryList").append(
+          `<ul class="taskCategory"><input type="radio" name="categorySelector" id="${safeCatTitle}Select" value="${title}"><img id="${safeCatTitle}Eyes" class="visible" src="Icons/openEye.png"><span class="catTitle">${title}</span><span class="catColor" style=
+          "color:${
+            savedCategories[title].color
+          }"> &#8226;</span><span class="${safeCatTitle}Count"> ${0} instance(s) </span>`
         );
+      });
+      categories.categoryListInteract();
+    },
+
+    //NEW
+    categoryListInteract() {
+      let $eye = $(".taskCategory").find("img");
+
+      $($eye).click(function () {
+        let $listTitle = $(this).siblings(".catTitle").text();
+        $(".fullTitle").each(function () {
+          let $cellContents = $(this).html();
+
+          if ($listTitle === $cellContents) {
+            let $dot = $(this).next();
+            if ($dot.attr("class") === "dot") {
+              $dot.attr("class", "dotHidden");
+            } else if ($dot.attr("class") === "dotHidden") {
+              $dot.attr("class", "dot");
+            }
+          }
+        });
+      });
+
+      $($eye).click(function () {
+        if ($(this).attr("src") === "Icons/openEye.png") {
+          $(this).attr({ src: "Icons/closedEye.png", class: "hidden" });
+        } else if ($(this).attr("src") === "Icons/closedEye.png") {
+          $(this).attr({ src: "Icons/openEye.png", class: "visible" });
+        }
       });
     },
 
     currentSelection() {
-      const categoryList = dataHandler.getCategories(); //CHANGED HERE
-      let selectedCategory = $("#dropdown").val();
+      const categoryList = dataHandler.getCategories();
+      let selectedCategory = $("input[name='categorySelector']:checked").val();
 
       if (!selectedCategory || !categoryList[selectedCategory]) {
         return;
@@ -432,15 +520,6 @@ $(document).ready(function () {
         title: selectedCategory,
         color: categoryList[selectedCategory].color,
       };
-    },
-
-    colorIndicator() {
-      let selection = categories.currentSelection();
-      if (selection) {
-        $("#colorIndicator").show().css("color", selection.color);
-      } else {
-        $("#colorIndicator").hide();
-      }
     },
   };
 
@@ -452,18 +531,19 @@ $(document).ready(function () {
         .click(calendar.display)
         .click(cells.loadCells)
         .click(cells.setContent)
-        .click(cells.scale);
+        .click(categories.updateCategoryUI)
+        .click(categories.updateCategoryCounts);
+      // .click(cells.scale)
     },
 
     categoriesListener() {
       $("#addCategory").click(categories.createCategory);
     },
 
-    dropdownListener() {
-      $("#dropdown").on("change", function () {
-        categories.colorIndicator();
-        // categories.currentSelection(); No longer needed on change
-        cells.displaySelected();
+    radioButtonListener() {
+      $(document).on("change", 'input[type="radio"]', function () {
+        let $category = $(this).val();
+        cells.makeAllVisible($category);
       });
     },
 
@@ -473,11 +553,10 @@ $(document).ready(function () {
   };
 
   initialise.pageElements();
-  categories.updateDropdownUI();
   categories.currentSelection();
   listeners.submitDateListener();
   listeners.categoriesListener();
   listeners.clearAllListener();
-  listeners.dropdownListener();
-  // dataHandler.getCategories(); not needed?
+  listeners.radioButtonListener();
+  categories.categoryListInteract(); //NEW
 });
