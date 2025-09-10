@@ -54,8 +54,7 @@ th {
 td {
   position: relative;
   border: 1px solid;
-  width: 20vw; /*CHANGE*/
-  /* height: 20vw; REMOVE? */
+  width: 20vw;
   font-size: 12px;
   vertical-align: middle;
   text-align: center;
@@ -111,6 +110,12 @@ form {
 [class$="Count"] {
   font-size: 0.7rem;
   font-style: italic;
+}
+
+.delIcon {
+  margin-left: 5px;
+  height: 15px;
+  width: 15px;
 }
 
 #userColor {

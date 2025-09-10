@@ -1,11 +1,5 @@
 //BUGS & ISSUES
-//✅ Newly created categories are not clickable in list until page refresh
-//✅ Current method of toggling means newly created entries can 'flip-flop'. Change class name instead.
-//✅ Newly created category cells aren't able to toggle until after refresh
-//✅ Submit button duplicates category list each time it is pressed
-//✅ Data not clearing effectively on 'Clear All'
-//Single dots hidden behind dayMarker
-//Multiple dots deform cell size
+// Dots visibility incorrect after scaling
 
 const dataManager = (function () {
   let instance;
@@ -37,6 +31,10 @@ const dataManager = (function () {
       this.saveToStorage();
     }
 
+    removeCategory() {
+      //pass in category
+    }
+
     getCategories() {
       return this.data.categories;
     }
@@ -59,7 +57,6 @@ const dataManager = (function () {
       } else {
         return;
       }
-      // console.log(this.data);
       this.saveToStorage();
     }
 
@@ -79,7 +76,6 @@ const dataManager = (function () {
         console.log(`All entries for ${cellDate} removed.`);
       }
 
-      // console.log(this.data);
       this.saveToStorage();
     }
 
@@ -132,6 +128,19 @@ $(document).ready(function () {
   };
 
   const calendar = {
+    workInProgress() {
+      let [userDay, userMonth, userYear] = grabDate();
+
+      let isLeapYear;
+      if (calendar.daysInMonth(2, userYear) === 29) {
+        isLeapYear = true;
+      } else {
+        isLeapYear = false;
+      }
+
+      console.log(month, isLeapYear);
+    },
+
     grabDate() {
       let selectedDate = $("#date").val();
       if (!selectedDate) {
@@ -294,7 +303,7 @@ $(document).ready(function () {
             categories.updateCategoryCounts(); //NEW
           }
 
-          // cells.contentCounter($(this));
+          cells.contentCounter($(this));
         });
     },
 
@@ -340,9 +349,8 @@ $(document).ready(function () {
             $cell.append(`<span class="dot">&#8226;</span>`);
             let $dot = $cell.find(".dot").last();
             $dot.css("color", color);
-
-            // cells.contentCounter($cell);
           }
+          cells.contentCounter($cell);
         }
       }
     },
@@ -359,49 +367,37 @@ $(document).ready(function () {
       });
     },
 
-    //Still working here
+    //NEW
     contentCounter(cell) {
-      let contentCount = cell.find(".fullTitle").length;
+      let contentCount = cell.find(".dot").length;
       if (contentCount > 1) {
         cell.find(".dot").hide();
         cell.find(".catCount").text(contentCount);
-        cells.scale();
+        cells.scale(cell);
       } else {
         cell.find(".dot").show();
-        cell.find(".catCount").remove();
+        cell.find(".catCount").empty();
       }
+      return contentCount;
     },
 
-    scale() {
-      //   $(".dayCell")
-      //     .on("mouseenter", function () {
-      //       const selected = categories.currentSelection();
-      //       if (!selected) {
-      //         return;
-      //       }
-      //       const $this = $(this);
-      //       const $title = $this.find(".fullTitle").filter(function () {
-      //         return $(this).text() === selected.title;
-      //       });
-      //       const $dot = $this.find(".dot").filter(function () {
-      //         return $(this).css("color") === cells.hexConvert(selected.color);
-      //       });
-      //       if ($title.length > 0 && $dot.length > 0) {
-      //         $this.addClass("scaled");
-      //         $title.show();
-      //         $dot.hide();
-      //       }
-      //     })
-      //     .on("mouseleave", function () {
-      //       const $this = $(this);
-      //       if ($this.hasClass("scaled")) {
-      //         const $title = $this.find(".fullTitle");
-      //         const $dot = $this.find(".dot");
-      //         $this.removeClass("scaled");
-      //         $title.hide();
-      //         $dot.show();
-      //       }
-      //     });
+    scale(cell) {
+      $(cell)
+        .on("mouseenter", function () {
+          let $catCount = $(this).find(".catCount");
+          let $dot = $(this).find(".dot");
+          $(this).addClass("scaled");
+          $catCount.hide();
+          $dot.show();
+        })
+        .on("mouseleave", function () {
+          let $catCount = $(this).find(".catCount");
+          let $dot = $(this).find(".dot");
+          $(this).removeClass("scaled");
+          cells.contentCounter(cell);
+          $catCount.show();
+          $dot.hide();
+        });
     },
   };
 
@@ -411,7 +407,7 @@ $(document).ready(function () {
       let safeCatTitle = newCategory.replace(/\s+/g, ""); //NEW
       let categoryColor = $("#userColor").val();
       let listAppend = `<ul class="taskCategory"><input type="radio" name="categorySelector" id="${safeCatTitle}Select" value="${newCategory}"><img id="${safeCatTitle}Eyes" class="visible" src="Icons/openEye.png"><span class="catTitle">${newCategory}</span><span class="catColor" style=
-          "color:${categoryColor}"> &#8226;</span><span class="${safeCatTitle}Count"> ${0} instance(s) </span>`;
+          "color:${categoryColor}"> &#8226;</span><span class="${safeCatTitle}Count"> ${0} instance(s) </span><img id="${safeCatTitle}Del" class="delIcon" src="Icons/bin.png">`;
 
       if (
         newCategory &&
@@ -474,7 +470,7 @@ $(document).ready(function () {
           `<ul class="taskCategory"><input type="radio" name="categorySelector" id="${safeCatTitle}Select" value="${title}"><img id="${safeCatTitle}Eyes" class="visible" src="Icons/openEye.png"><span class="catTitle">${title}</span><span class="catColor" style=
           "color:${
             savedCategories[title].color
-          }"> &#8226;</span><span class="${safeCatTitle}Count"> ${0} instance(s) </span>`
+          }"> &#8226;</span><span class="${safeCatTitle}Count"> ${0} instance(s) </span><img id="${safeCatTitle}Del" class="delIcon" src="Icons/bin.png">`
         );
       });
       categories.categoryListInteract();
@@ -483,6 +479,7 @@ $(document).ready(function () {
     //NEW
     categoryListInteract() {
       let $eye = $(".taskCategory").find("img");
+      let $bin = $(".taskCategory").find(".delIcon");
 
       $($eye).click(function () {
         let $listTitle = $(this).siblings(".catTitle").text();
@@ -505,6 +502,17 @@ $(document).ready(function () {
           $(this).attr({ src: "Icons/closedEye.png", class: "hidden" });
         } else if ($(this).attr("src") === "Icons/closedEye.png") {
           $(this).attr({ src: "Icons/openEye.png", class: "visible" });
+        }
+      });
+
+      $($bin).click(function () {
+        $currentCat = $(this).parent();
+        $currentTitle = $(this).prevAll(".catTitle").text();
+        if (confirm(`Would you like to delete ${$currentTitle}?`)) {
+          $currentCat.remove();
+          //Update contentCounter
+          //Delete all corresponding cells
+          //Delete category from data object and storage
         }
       });
     },
@@ -533,7 +541,6 @@ $(document).ready(function () {
         .click(cells.setContent)
         .click(categories.updateCategoryUI)
         .click(categories.updateCategoryCounts);
-      // .click(cells.scale)
     },
 
     categoriesListener() {
