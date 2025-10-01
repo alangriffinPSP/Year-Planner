@@ -47,8 +47,10 @@ th {
   height: 20px;
 }
 
-.monthRow:first {
-  display: none;
+.dayHeaderRow {
+  border: none;
+  font-size: small;
+  text-align: center;
 }
 
 td {

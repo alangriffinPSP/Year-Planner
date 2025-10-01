@@ -1,5 +1,10 @@
 //BUGS & ISSUES
-// Dots visibility incorrect after scaling
+//✅ Dots visibility incorrect after scaling - REQUIRES TESTING
+//✅ Delete does not yet remove category/cells from data object - UNDERSTAND
+// Calendar loop - N.B. Year must increase on loop past Dec.
+// Limit number of dots before creating new line in a cell
+// Limit number of categories in list before starting new list
+// If cell goes from >1 dot to 1, scale still applies
 
 const dataManager = (function () {
   let instance;
@@ -31,8 +36,20 @@ const dataManager = (function () {
       this.saveToStorage();
     }
 
-    removeCategory() {
-      //pass in category
+    removeRecord(title) {
+      let targetCategory = title;
+      for (let date in this.data.cells) {
+        this.data.cells[date] = this.data.cells[date].filter(function (entry) {
+          return entry.category !== targetCategory;
+        });
+        if (this.data.cells[date].length === 0) {
+          delete this.data.cells[date];
+        }
+      }
+      delete this.data.categories[title];
+
+      console.log("Deleted record for: ", title);
+      this.saveToStorage();
     }
 
     getCategories() {
@@ -128,19 +145,6 @@ $(document).ready(function () {
   };
 
   const calendar = {
-    workInProgress() {
-      let [userDay, userMonth, userYear] = grabDate();
-
-      let isLeapYear;
-      if (calendar.daysInMonth(2, userYear) === 29) {
-        isLeapYear = true;
-      } else {
-        isLeapYear = false;
-      }
-
-      console.log(month, isLeapYear);
-    },
-
     grabDate() {
       let selectedDate = $("#date").val();
       if (!selectedDate) {
@@ -157,6 +161,19 @@ $(document).ready(function () {
 
     daysInMonth(month, year) {
       return new Date(year, month, 0).getDate();
+    },
+
+    //Pads date to render correctly on Safari
+    safariFix(month, day) {
+      if (month < 10) {
+        month = `0${month}`;
+      }
+
+      if (day < 10) {
+        day = `0${day}`;
+      }
+
+      return [month, day];
     },
 
     generateMonths() {
@@ -179,7 +196,8 @@ $(document).ready(function () {
 
       calendar.dayHeaders();
 
-      let [, userMonth] = calendar.grabDate();
+      let [, userMonth, userYear] = calendar.grabDate();
+      //Add logic for year iteration here?
       for (let i = 0; i < months.length; i++) {
         const index = (userMonth - 1 + i) % months.length; //wrap around
         const $header = $("<th></th>")
@@ -190,11 +208,11 @@ $(document).ready(function () {
         $row.append($header);
         $("#calendarBody").append($row);
       }
-      calendar.generateDays();
+      calendar.generateDays(userYear);
     },
 
-    generateDays() {
-      let [userDay, userMonth, userYear] = calendar.grabDate();
+    generateDays(userYear) {
+      $("td").remove(); //Deletes previous day cells
 
       $(".monthRow").each(function () {
         if ($(this).attr("id") > 0) {
@@ -203,11 +221,13 @@ $(document).ready(function () {
 
           const $row = $rowHeader.closest("tr");
 
-          const days = calendar.daysInMonth(rowID, userYear);
+          const numberOfDays = calendar.daysInMonth(rowID, userYear);
 
-          for (let i = 1; i <= days; i++) {
+          for (let i = 1; i <= numberOfDays; i++) {
+            let [paddedMonth, paddedDay] = calendar.safariFix(rowID, i);
+
             $row.append(
-              `<td id="${userYear}-${rowID}-${i}" class="dayCell"><span class="dayMarker">${i}</span><span class="catCount"></span></td>`
+              `<td id="${userYear}-${paddedMonth}-${paddedDay}" class="dayCell"><span class="dayMarker">${i}</span><span class="catCount"></span></td>`
             );
           }
           calendar.fitDays($row);
@@ -219,7 +239,9 @@ $(document).ready(function () {
       const days = ["M", "Tu", "W", "Th", "F", "Sa", "Su"];
 
       const $newHeader = $("<tr></tr>");
-      $newHeader.append("<th style='visibility:hidden'></th>");
+      $newHeader.append(
+        "<th class='dayHeaderRow'><button id='prevYear'>-</button> Year <button id='nextYear'>+</button></th>"
+      );
       //arbitrarily runs 5 times just to populate. Is not dynamic.
       for (let count = 0; count < 5; count++) {
         days.forEach(function (day) {
@@ -229,10 +251,10 @@ $(document).ready(function () {
       $("#calendarBody").append($newHeader);
     },
 
-    fitDays(month) {
-      const $firstOfMonth = month.find("td:first").attr("id");
-      const blank = month.find("th:first");
-      const workingDate = new Date($firstOfMonth);
+    fitDays(monthRow) {
+      const $firstCell = monthRow.find("td:first").attr("id");
+      const blank = monthRow.find("th:first");
+      const workingDate = new Date($firstCell);
       let offset = workingDate.getDay();
       if (offset == 0) {
         offset = 7;
@@ -240,6 +262,32 @@ $(document).ready(function () {
       for (let i = 1; i < offset; i++) {
         blank.after(`<td style="visibility:hidden"></td>`);
       }
+    },
+
+    changeYear() {
+      let selectedDay = $("#date").val().split("-")[2];
+      let [, selectedMonth, selectedYear] = calendar.grabDate();
+      let [safeMonth] = calendar.safariFix(selectedMonth);
+      let newDate;
+
+      $("#prevYear").click(function () {
+        selectedYear -= 1;
+        newDate = `${selectedYear}-${safeMonth}-${selectedDay}`;
+        $("#date").val(newDate);
+        calendar.generateDays(selectedYear);
+        cells.loadCells();
+        cells.setContent();
+        categories.updateCategoryCounts();
+      });
+      $("#nextYear").click(function () {
+        selectedYear += 1;
+        newDate = `${selectedYear}-${safeMonth}-${selectedDay}`;
+        $("#date").val(newDate);
+        calendar.generateDays(selectedYear);
+        cells.loadCells();
+        cells.setContent();
+        categories.updateCategoryCounts();
+      });
     },
 
     display() {
@@ -301,6 +349,7 @@ $(document).ready(function () {
 
             dataHandler.removeCell(identifier, selectedCategory.title);
             categories.updateCategoryCounts(); //NEW
+            cells.contentCounter($(this)); //NEW
           }
 
           cells.contentCounter($(this));
@@ -328,6 +377,8 @@ $(document).ready(function () {
     },
 
     loadCells() {
+      $(".dot").remove();
+      $(".fullTitle").remove();
       const data = dataHandler.getData();
       const categories = data.categories;
       const cellData = data.cells;
@@ -371,33 +422,29 @@ $(document).ready(function () {
     contentCounter(cell) {
       let contentCount = cell.find(".dot").length;
       if (contentCount > 1) {
-        cell.find(".dot").hide();
-        cell.find(".catCount").text(contentCount);
-        cells.scale(cell);
-      } else {
-        cell.find(".dot").show();
-        cell.find(".catCount").empty();
-      }
-      return contentCount;
-    },
-
-    scale(cell) {
-      $(cell)
-        .on("mouseenter", function () {
-          let $catCount = $(this).find(".catCount");
-          let $dot = $(this).find(".dot");
-          $(this).addClass("scaled");
-          $catCount.hide();
-          $dot.show();
-        })
-        .on("mouseleave", function () {
-          let $catCount = $(this).find(".catCount");
-          let $dot = $(this).find(".dot");
-          $(this).removeClass("scaled");
-          cells.contentCounter(cell);
-          $catCount.show();
-          $dot.hide();
+        cell.find(".dot").hide(); //hides dots
+        cell.find(".catCount").text(contentCount); //shows counter
+        cell.on("mouseenter", function () {
+          $(this).addClass("scaled"); //triggers mouseover scale
+          $(this).find(".dot").show(); //shows dots
+          $(this).find(".catCount").hide(); //hides counter
         });
+        cell.on("mouseleave", function () {
+          $(this).removeClass("scaled");
+          $(this).find(".dot").hide(); //hides dots
+          $(this).find(".catCount").show(); //shows counter
+          cells.contentCounter(cell);
+        });
+      } else {
+        cell.find(".dot").show(); //shows dot
+        cell.find(".catCount").empty(); //clears counter
+        cell.removeClass("scaled"); //removes scale class
+      }
+
+      //For every two dots move to new line
+      // if (contentCount > 2) {
+      //   $(this).append(`<br>`);
+      // }
     },
   };
 
@@ -482,6 +529,12 @@ $(document).ready(function () {
       let $bin = $(".taskCategory").find(".delIcon");
 
       $($eye).click(function () {
+        if ($(this).attr("src") === "Icons/openEye.png") {
+          $(this).attr({ src: "Icons/closedEye.png", class: "hidden" });
+        } else if ($(this).attr("src") === "Icons/closedEye.png") {
+          $(this).attr({ src: "Icons/openEye.png", class: "visible" });
+        }
+
         let $listTitle = $(this).siblings(".catTitle").text();
         $(".fullTitle").each(function () {
           let $cellContents = $(this).html();
@@ -497,22 +550,13 @@ $(document).ready(function () {
         });
       });
 
-      $($eye).click(function () {
-        if ($(this).attr("src") === "Icons/openEye.png") {
-          $(this).attr({ src: "Icons/closedEye.png", class: "hidden" });
-        } else if ($(this).attr("src") === "Icons/closedEye.png") {
-          $(this).attr({ src: "Icons/openEye.png", class: "visible" });
-        }
-      });
-
       $($bin).click(function () {
-        $currentCat = $(this).parent();
-        $currentTitle = $(this).prevAll(".catTitle").text();
+        let $currentCat = $(this).parent();
+        let $currentTitle = $(this).prevAll(".catTitle").text();
         if (confirm(`Would you like to delete ${$currentTitle}?`)) {
           $currentCat.remove();
-          //Update contentCounter
-          //Delete all corresponding cells
-          //Delete category from data object and storage
+          dataHandler.removeRecord($currentTitle);
+          cells.loadCells(); //Re-load cells after record deletion
         }
       });
     },
@@ -534,9 +578,9 @@ $(document).ready(function () {
   const listeners = {
     submitDateListener() {
       $("#submit")
-        .click(calendar.grabDate)
         .click(calendar.generateMonths)
-        .click(calendar.display)
+        .click(calendar.display) // Shows calendar container
+        .click(calendar.changeYear) //Wakes up year buttons
         .click(cells.loadCells)
         .click(cells.setContent)
         .click(categories.updateCategoryUI)
@@ -565,5 +609,5 @@ $(document).ready(function () {
   listeners.categoriesListener();
   listeners.clearAllListener();
   listeners.radioButtonListener();
-  categories.categoryListInteract(); //NEW
+  categories.categoryListInteract();
 });
