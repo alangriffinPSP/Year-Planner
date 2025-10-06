@@ -1,10 +1,8 @@
 //BUGS & ISSUES
 //✅ Dots visibility incorrect after scaling - REQUIRES TESTING
 //✅ Delete does not yet remove category/cells from data object - UNDERSTAND
-// Calendar loop - N.B. Year must increase on loop past Dec.
-// Limit number of dots before creating new line in a cell
+//✅ Calendar loop - N.B. Year must increase on loop past Dec.
 // Limit number of categories in list before starting new list
-// If cell goes from >1 dot to 1, scale still applies
 
 const dataManager = (function () {
   let instance;
@@ -163,7 +161,6 @@ $(document).ready(function () {
       return new Date(year, month, 0).getDate();
     },
 
-    //Pads date to render correctly on Safari
     safariFix(month, day) {
       if (month < 10) {
         month = `0${month}`;
@@ -194,41 +191,64 @@ $(document).ready(function () {
 
       $("#calendarBody").empty();
 
-      calendar.dayHeaders();
-
       let [, userMonth, userYear] = calendar.grabDate();
-      //Add logic for year iteration here?
+
       for (let i = 0; i < months.length; i++) {
-        const index = (userMonth - 1 + i) % months.length; //wrap around
+        const index = (userMonth - 1 + i) % months.length;
         const $header = $("<th></th>")
           .attr("id", index + 1)
-          .attr("class", "monthRow")
+          .attr("class", "monthLabel")
           .text(months[index]);
-        const $row = $("<tr></tr>");
+        const $row = $('<tr class="monthRow"></tr>');
         $row.append($header);
         $("#calendarBody").append($row);
       }
       calendar.generateDays(userYear);
+      calendar.dayHeaders();
     },
 
+    //For each month row that has already been generated
+    //append a cell(<TD>) for the number of days in that month
+    //
     generateDays(userYear) {
-      $("td").remove(); //Deletes previous day cells
+      $("td").remove();
+      // Strips user date to single digit to be used for cell start point
+      let userDate = $("#date").val().split("-")[2];
+      if (userDate < 10) {
+        userDate = userDate.split("0")[1];
+      }
+      ////////////////////////////////////////////////
 
-      $(".monthRow").each(function () {
+      // Checks Feb day count of current year to determine total number of cells needed
+      const daysFeb = calendar.daysInMonth(2, userYear);
+      let totalDayCount;
+
+      if (daysFeb === 29) {
+        totalDayCount = 366;
+      } else {
+        totalDayCount = 365;
+      }
+      ////////////////////////////////////////////////
+
+      $(".monthLabel").each(function () {
         if ($(this).attr("id") > 0) {
           const $rowHeader = $(this);
           const rowID = parseInt($rowHeader.attr("id"));
-
           const $row = $rowHeader.closest("tr");
-
           const numberOfDays = calendar.daysInMonth(rowID, userYear);
 
           for (let i = 1; i <= numberOfDays; i++) {
             let [paddedMonth, paddedDay] = calendar.safariFix(rowID, i);
 
             $row.append(
-              `<td id="${userYear}-${paddedMonth}-${paddedDay}" class="dayCell"><span class="dayMarker">${i}</span><span class="catCount"></span></td>`
+              `<td id="${userYear}-${paddedMonth}-${paddedDay}" class="dayCell"><span class="dayMarker">${i}</span><div class="contentContainer"></div></td>`
             );
+
+            let lastCellDate = `${userYear}-${paddedMonth}-${paddedDay}`;
+            //Increments year if loop
+            if (lastCellDate == `${userYear}-12-31`) {
+              userYear += 1;
+            }
           }
           calendar.fitDays($row);
         }
@@ -236,19 +256,23 @@ $(document).ready(function () {
     },
 
     dayHeaders() {
+      $("#dayHeaders").remove();
       const days = ["M", "Tu", "W", "Th", "F", "Sa", "Su"];
 
-      const $newHeader = $("<tr></tr>");
+      const $newHeader = $('<tr id="dayHeaders"></tr>');
       $newHeader.append(
         "<th class='dayHeaderRow'><button id='prevYear'>-</button> Year <button id='nextYear'>+</button></th>"
       );
-      //arbitrarily runs 5 times just to populate. Is not dynamic.
-      for (let count = 0; count < 5; count++) {
-        days.forEach(function (day) {
-          $newHeader.append(`<th>${day}</th>`);
-        });
+
+      let count = calendar.dayCounting();
+
+      //Solidify understanding
+      for (let i = 0; i < count; i++) {
+        const dayLabel = days[i % days.length];
+        $newHeader.append(`<th>${dayLabel}</th>`);
       }
-      $("#calendarBody").append($newHeader);
+      $("#calendarBody").prepend($newHeader);
+      calendar.changeYear();
     },
 
     fitDays(monthRow) {
@@ -265,29 +289,44 @@ $(document).ready(function () {
     },
 
     changeYear() {
-      let selectedDay = $("#date").val().split("-")[2];
+      let selectedDate = $("#date").val().split("-")[2];
       let [, selectedMonth, selectedYear] = calendar.grabDate();
       let [safeMonth] = calendar.safariFix(selectedMonth);
       let newDate;
 
       $("#prevYear").click(function () {
         selectedYear -= 1;
-        newDate = `${selectedYear}-${safeMonth}-${selectedDay}`;
+        newDate = `${selectedYear}-${safeMonth}-${selectedDate}`;
         $("#date").val(newDate);
         calendar.generateDays(selectedYear);
+        calendar.dayHeaders();
         cells.loadCells();
         cells.setContent();
         categories.updateCategoryCounts();
       });
       $("#nextYear").click(function () {
         selectedYear += 1;
-        newDate = `${selectedYear}-${safeMonth}-${selectedDay}`;
+        newDate = `${selectedYear}-${safeMonth}-${selectedDate}`;
         $("#date").val(newDate);
         calendar.generateDays(selectedYear);
+        calendar.dayHeaders();
         cells.loadCells();
         cells.setContent();
         categories.updateCategoryCounts();
       });
+    },
+
+    dayCounting() {
+      let longestRow = 0;
+
+      $(".monthRow").each(function () {
+        const currentRow = $(this).find(`td`).length;
+        if (currentRow > longestRow) {
+          longestRow = currentRow;
+        }
+      });
+
+      return longestRow;
     },
 
     display() {
@@ -303,8 +342,8 @@ $(document).ready(function () {
         .off("click")
         .on("click", function () {
           let selectedCategory = categories.currentSelection();
-
           let identifier = $(this).attr("id");
+          let $container = $(this).find(".contentContainer");
 
           if (!selectedCategory) {
             return;
@@ -324,60 +363,36 @@ $(document).ready(function () {
               return $(this).text() === selectedCategory.title;
             });
 
-          let $dupeDot = $(this)
-            .find(".dot")
+          let $dupeContent = $(this)
+            .find(".contentStripe")
             .filter(function () {
-              return (
-                $(this).css("color") ===
-                cells.hexConvert(selectedCategory.color)
-              );
+              return $(this).attr("id") === selectedCategory.title;
             });
 
           if ($dupeTitle.length === 0) {
             $(this).prepend(
-              `<span class="fullTitle">${selectedCategory.title}</span>`,
-              `<span class="dot" style="color: ${selectedCategory.color}">&#8226;</span>`
+              `<span class="fullTitle">${selectedCategory.title}</span>`
             );
-            let $bg = $(this).find(".fullTitle").first();
-            $bg.css("background", selectedCategory.color);
+            $container.prepend(
+              `<div class="contentStripe" id="${selectedCategory.title}">`
+            );
+            let $content = $($container).find(".contentStripe").first();
+            $content.css("background-color", selectedCategory.color);
 
             dataHandler.addCell(identifier, selectedCategory.title);
             categories.updateCategoryCounts(); //NEW
           } else {
             $dupeTitle.remove();
-            $dupeDot.remove();
+            $dupeContent.remove();
 
             dataHandler.removeCell(identifier, selectedCategory.title);
             categories.updateCategoryCounts(); //NEW
-            cells.contentCounter($(this)); //NEW
           }
-
-          cells.contentCounter($(this));
         });
     },
 
-    hexConvert(hex) {
-      hex = hex.replace("#", "");
-
-      if (hex.length === 3) {
-        hex = hex
-          .split("")
-          .map(function (char) {
-            return char + char;
-          })
-          .join("");
-      }
-
-      const int = parseInt(hex, 16);
-      const r = (int >> 16) & 255;
-      const g = (int >> 8) & 255;
-      const b = int & 255;
-
-      return `rgb(${r}, ${g}, ${b})`;
-    },
-
     loadCells() {
-      $(".dot").remove();
+      $(".contentStripe").remove();
       $(".fullTitle").remove();
       const data = dataHandler.getData();
       const categories = data.categories;
@@ -387,6 +402,7 @@ $(document).ready(function () {
         if (cellData.hasOwnProperty(cellId)) {
           let $cell = $("#" + cellId);
           let entries = cellData[cellId];
+          let $contentContainer = $cell.find(".contentContainer");
 
           for (let i = 0; i < entries.length; i++) {
             let category = entries[i].category;
@@ -397,54 +413,25 @@ $(document).ready(function () {
             $cell.append(`<span class="fullTitle">${category}</span>`);
             let $title = $cell.find(".fullTitle").last();
             $title.css("background-color", color);
-            $cell.append(`<span class="dot">&#8226;</span>`);
-            let $dot = $cell.find(".dot").last();
-            $dot.css("color", color);
+            $contentContainer.append(
+              `<span class="contentStripe" id="${$title.html()}"></span>`
+            );
+            let $stripe = $cell.find(".contentStripe").last();
+            $stripe.css("background-color", color);
           }
-          cells.contentCounter($cell);
         }
       }
     },
 
     makeAllVisible(category) {
-      $(".fullTitle").each(function () {
-        let $cellContents = $(this).html();
+      $(".contentStripe").each(function () {
+        let $cellContents = $(this).attr("id");
         let $icon = $(`#${category}Select`).nextAll("img").first();
         if (category === $cellContents) {
-          let $dot = $(this).next();
-          $dot.attr("class", "dot");
+          $(this).css("display", "flex");
           $icon.attr({ src: "Icons/openEye.png", class: "visible" });
         }
       });
-    },
-
-    //NEW
-    contentCounter(cell) {
-      let contentCount = cell.find(".dot").length;
-      if (contentCount > 1) {
-        cell.find(".dot").hide(); //hides dots
-        cell.find(".catCount").text(contentCount); //shows counter
-        cell.on("mouseenter", function () {
-          $(this).addClass("scaled"); //triggers mouseover scale
-          $(this).find(".dot").show(); //shows dots
-          $(this).find(".catCount").hide(); //hides counter
-        });
-        cell.on("mouseleave", function () {
-          $(this).removeClass("scaled");
-          $(this).find(".dot").hide(); //hides dots
-          $(this).find(".catCount").show(); //shows counter
-          cells.contentCounter(cell);
-        });
-      } else {
-        cell.find(".dot").show(); //shows dot
-        cell.find(".catCount").empty(); //clears counter
-        cell.removeClass("scaled"); //removes scale class
-      }
-
-      //For every two dots move to new line
-      // if (contentCount > 2) {
-      //   $(this).append(`<br>`);
-      // }
     },
   };
 
@@ -536,15 +523,15 @@ $(document).ready(function () {
         }
 
         let $listTitle = $(this).siblings(".catTitle").text();
-        $(".fullTitle").each(function () {
-          let $cellContents = $(this).html();
+        $(".contentStripe").each(function () {
+          let $cellContents = $(this).attr("id");
 
           if ($listTitle === $cellContents) {
-            let $dot = $(this).next();
-            if ($dot.attr("class") === "dot") {
-              $dot.attr("class", "dotHidden");
-            } else if ($dot.attr("class") === "dotHidden") {
-              $dot.attr("class", "dot");
+            let $stripe = $(this);
+            if ($stripe.css("display") === "flex") {
+              $stripe.css("display", "none");
+            } else if ($stripe.css("display") === "none") {
+              $stripe.css("display", "flex");
             }
           }
         });

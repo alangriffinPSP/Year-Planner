@@ -13,6 +13,7 @@ body {
 }
 
 #calendarBody {
+  height: 100%;
   display: none;
 }
 
@@ -57,9 +58,28 @@ td {
   position: relative;
   border: 1px solid;
   width: 20vw;
+  height: 100%;
   font-size: 12px;
   vertical-align: middle;
   text-align: center;
+}
+
+.contentContainer {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  flex-direction: row;
+  flex-wrap: nowrap;
+}
+
+.contentStripe {
+  display: flex;
+  flex-grow: 1;
+  flex-basis: 0;
+}
+
+.stripeHidden {
+  display: none;
 }
 
 td.scaled {
@@ -74,6 +94,7 @@ td.scaled {
   position: absolute;
   top: 0;
   left: 0;
+  z-index: 2;
 }
 
 .catCount {
