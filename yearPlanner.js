@@ -151,7 +151,8 @@ $(document).ready(function () {
       let savedDate = dataHandler.getDate();
       const dates = new Object();
 
-      if (!savedDate) {
+      if (!savedDate || Object.keys(savedDate).length === 0) {
+        console.log(savedDate);
         let fullDate = new Date();
 
         dates.year = fullDate.getFullYear();
@@ -546,6 +547,7 @@ $(document).ready(function () {
   };
 
   const categories = {
+    //Condense
     createCategory() {
       let newCategory = $("#category").val().trim();
       let safeCatTitle = `${newCategory.replace(/\s+/g, "")}`;
@@ -632,6 +634,7 @@ $(document).ready(function () {
       });
     },
 
+    //Condense
     updateCategoryUI() {
       $("#categoryTable").empty();
       const savedCategories = dataHandler.getCategories();
