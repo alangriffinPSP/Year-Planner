@@ -15,30 +15,43 @@
 
   <body>
     <h2 id="heading">Year Planner</h2>
-    <div id="dateInput">
-      <form>
-        <label for="date">Please select:</label>
-        <input type="date" id="date" name="date" />
-        <button id="submit" type="button" autofocus>Submit</button>
-      </form>
+    <div id="topContainer">
+      <div id="dateInput">
+        <form>
+          <label for="date">Please select:</label>
+          <input type="date" id="date" name="date" />
+          <button id="submit" type="button" autofocus>Submit</button>
+        </form>
+      </div>
+      <div id="selectionContainer">
+        Current selection:
+        <div id="currentColor"></div>
+        <div id="currentTitle"></div>
+      </div>
     </div>
     <main>
       <div id="calendarContainer">
         <table id="calendarBody">
-          <!--Calendar grid goes here-->
+          <!--Calendar table goes here-->
         </table>
       </div>
       <div id="categoryContainer">
-        <label for="category">Add category:</label>
-        <input type="text" id="category" name="category" />
-        <input type="color" id="userColor" name="userColor" />
-        <button id="addCategory" type="button">+</button>
+        <div id="inputFieldRow">
+          <label for="category">Add category:</label>
+          <input type="text" id="category" name="category" />
+          <input type="color" id="userColor" name="userColor" />
+          <button id="addCategory" type="button">+</button>
+        </div>
         <div id="error"></div>
         <br />
         <button id="clearAll" name="clearAll">Clear all</button>
       </div>
       <br />
-      <div id="categoryList"></div>
+      <div id="catTableContainer">
+        <table id="categoryTable">
+          <!--Category table goes here-->
+        </table>
+      </div>
       <br />
     </main>
   </body>

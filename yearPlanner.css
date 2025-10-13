@@ -1,8 +1,8 @@
 :root {
-  --textcolor: #d8d6d6;
+  --textcolor: #3b3a3a;
   --linkcolor: #acacac;
-  --linkhover: #606870;
-  --bgcolor: #4a525a;
+  --linkhover: #a6b1bc;
+  --bgcolor: #e8e8e8;
 }
 
 body {
@@ -34,27 +34,65 @@ a:hover {
   margin: 50px auto 30px 10%;
 }
 
+#topContainer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+#selectionContainer {
+  margin-left: 10%;
+  display: none;
+  align-items: center;
+}
+
+#currentColor {
+  border-radius: 5px;
+  margin-left: 5px;
+  height: 20px;
+  width: 20px;
+}
+
+#currentTitle {
+  margin-left: 10px;
+  margin-right: 10px;
+  display: inline-flex;
+  font-size: 20px;
+}
+
+.fullTitle {
+  display: none;
+}
+
 main {
   margin: 3%;
 }
 
 table {
-  table-layout: fixed;
+  table-layout: auto;
 }
 
 th {
-  text-align: left;
   border: 1px solid;
   height: 20px;
+}
+
+.dayLabel {
+  text-align: center;
 }
 
 .dayHeaderRow {
   border: none;
   font-size: small;
-  text-align: center;
 }
 
-td {
+.monthLabel {
+  text-align: left;
+}
+
+.dayCell {
+  max-width: 40px;
+  max-height: 40px;
   position: relative;
   border: 1px solid;
   width: 20vw;
@@ -112,11 +150,67 @@ form {
   display: none;
 }
 
-#categoryList {
-  float: left;
+#inputFieldRow {
+  display: flex;
+}
+
+#categoryTable {
+  width: 100%;
+  table-layout: auto;
+  width: auto;
+}
+
+.catTableRow {
+  align-items: center;
+  min-height: 20px;
+}
+
+.tableRowSelected {
+  align-items: center;
+  min-height: 20px;
+  background-color: var(--linkhover);
+}
+
+#categoryTable td {
+  max-width: fit-content;
+  padding: 8px;
+  border: 1px solid;
+  font-size: 12px;
+  vertical-align: middle;
+  height: auto;
+  width: auto;
+}
+
+.colorBox {
   margin-left: auto;
-  margin-right: 0;
-  display: none;
+  margin-right: auto;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  border-radius: 15px;
+  height: 20px;
+  width: 20px;
+}
+
+.colorEditPicker {
+  border-style: none;
+  border-radius: 5px;
+  padding: 0px;
+  height: 25px;
+  width: 25px;
+}
+
+.countLabel {
+  font-style: italic;
+  font-size: 0.5rem;
+}
+
+.delIcon {
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  height: 15px;
+  width: 15px;
 }
 
 [id$="Eyes"] {
@@ -135,29 +229,14 @@ form {
   font-style: italic;
 }
 
-.delIcon {
-  margin-left: 5px;
-  height: 15px;
-  width: 15px;
-}
-
 #userColor {
-  height: 25px;
-  width: 25px;
-}
-
-.fullTitle {
-  padding: 2px;
-  border-radius: 2px;
-  display: none;
-}
-
-.dot {
-  display: block;
-}
-
-.dotHidden {
-  display: none;
+  vertical-align: middle;
+  border: none;
+  margin-left: 5px;
+  margin-right: 5px;
+  padding: 0px;
+  height: 20px;
+  width: 20px;
 }
 
 .dayCell:hover {
