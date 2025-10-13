@@ -708,6 +708,7 @@ $(document).ready(function () {
               ) === true
             ) {
               alert("Record exists with this colour. Please pick another.");
+              $(this).val(currentColor);
               return;
             }
 
